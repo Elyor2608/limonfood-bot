@@ -1,5 +1,6 @@
 import psycopg2
 import os
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,24 +13,26 @@ def get_connection():
 async def create_pool():
     pass
 
-def create_tables():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            telegram_id BIGINT UNIQUE NOT NULL,
-            ism TEXT,
-            telefon TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
-        );
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
+async def create_tables():
+    loop = asyncio.get_event_loop()
+    def _create():
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE NOT NULL,
+                ism TEXT,
+                telefon TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    return await loop.run_in_executor(None, _create)
 
 async def get_user(telegram_id):
-    import asyncio
     loop = asyncio.get_event_loop()
     def _get():
         conn = get_connection()
@@ -42,7 +45,6 @@ async def get_user(telegram_id):
     return await loop.run_in_executor(None, _get)
 
 async def add_user(telegram_id, ism, telefon):
-    import asyncio
     loop = asyncio.get_event_loop()
     def _add():
         conn = get_connection()
