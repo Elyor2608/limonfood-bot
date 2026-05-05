@@ -3,15 +3,18 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
 
+async def create_pool():
+    pass
+
 def create_tables():
     conn = get_connection()
     cur = conn.cursor()
-    
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -44,8 +47,10 @@ async def add_user(telegram_id, ism, telefon):
     def _add():
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO users (telegram_id, ism, telefon) VALUES (%s, %s, %s) ON CONFLICT (telegram_id) DO NOTHING",
-                    (telegram_id, ism, telefon))
+        cur.execute(
+            "INSERT INTO users (telegram_id, ism, telefon) VALUES (%s, %s, %s) ON CONFLICT (telegram_id) DO NOTHING",
+            (telegram_id, ism, telefon)
+        )
         conn.commit()
         cur.close()
         conn.close()
